@@ -28,13 +28,14 @@ import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.Util;
 import hudson.model.Run;
 import hudson.model.queue.SubTask;
-import java.io.Serializable;
-import java.util.List;
 import jenkins.model.RunAction2;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
+
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * Tracks the time spent in the queue
@@ -194,6 +195,27 @@ public class TimeInQueueAction implements Serializable, RunAction2 {
             total += t.getBuildableDurationMillis();
         }
         return total;
+    }
+
+    /**
+     * Returns max of BuildableTimeMillis in this {@link Run},
+     * and any associated {@link SubTask}s, spent in the queue in a buildable state.
+     *
+     * @return Returns max of BuildableTimeMillis in this {@link Run}, and any associated {@link SubTask}s,
+     * spent in the queue in a buildable state.
+     */
+    @Exported(visibility = 2)
+    public Long getMaxBuildableTimeMillis() {
+        if (run == null) {
+            return buildableDurationMillis;
+        }
+        long max = buildableDurationMillis;
+        for (SubTaskTimeInQueueAction t : run.getActions(SubTaskTimeInQueueAction.class)) {
+            if (t.getBuildableDurationMillis() > max) {
+                max = t.getBuildableDurationMillis();
+            }
+        }
+        return max;
     }
 
     /**
